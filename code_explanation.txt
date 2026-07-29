@@ -1,0 +1,242 @@
+================================================================
+  SMART CITY ECO-GRID — HOW TO RUN & CODE EXPLANATION
+================================================================
+
+
+================================================================
+  HOW TO RUN
+================================================================
+
+STEP 1 — Check Java is installed
+  Open a terminal and type:
+    java -version
+  You should see a version number. If not, install JDK from java.com.
+
+STEP 2 — Open terminal in the project folder
+  In VS Code: right-click the Assignment_3_Java_OOP folder
+              → "Open in Integrated Terminal"
+
+  Or navigate manually:
+    cd "c:/Users/C5253876/OneDrive - SAP SE/Claude/Claude Practice/Java training assigment checks/Assignment_3_Java_OOP"
+
+STEP 3 — Compile all 4 files (this creates .class files)
+  javac UrbanUtility.java EcoDevice.java SmartStreetGrid.java EcoGridApp.java
+
+  No output = success.
+
+STEP 4 — Run the program
+  java EcoGridApp
+
+  Note: no .java or .class extension — just the class name.
+
+----------------------------------------------------------------
+  WHY COMPILE IN THAT ORDER?
+----------------------------------------------------------------
+  Java needs to know about a class before it can use it.
+  UrbanUtility and EcoDevice are used by SmartStreetGrid,
+  so they must be compiled first.
+  EcoGridApp uses SmartStreetGrid, so it goes last.
+
+
+================================================================
+  CODE EXPLANATION (Simple)
+================================================================
+
+----------------------------------------------------------------
+  THE BIG PICTURE
+----------------------------------------------------------------
+  The program simulates a smart city streetlighting system.
+  Instead of writing everything in one big messy file, we split
+  it into 4 files — each with a clear responsibility.
+
+  UrbanUtility.java   →  The Blueprint  (abstract class)
+  EcoDevice.java      →  The Contract   (interface)
+  SmartStreetGrid.java →  The Device    (real working class)
+  EcoGridApp.java     →  The Launcher   (runs everything)
+
+
+----------------------------------------------------------------
+  FILE 1: UrbanUtility.java  — The Blueprint
+----------------------------------------------------------------
+  Think of this like a government form that EVERY city device
+  must fill out. It defines what every device must have:
+
+    - serialNumber  →  unique ID stamped at the factory
+    - powerRating   →  maximum power it can ever draw (kW)
+    - currentPower  →  how much power it is drawing right now
+    - status        →  ONLINE / ECO / EMERGENCY
+
+  It is ABSTRACT, meaning:
+    - You cannot create an UrbanUtility directly.
+    - It is only a template. Real devices extend it.
+
+  The key line is:
+    public abstract void performCoreAction();
+
+  This has NO body. It is a blank requirement.
+  It tells every child class: "You MUST implement this yourself."
+  A streetlight grid does lighting. A transit terminal does
+  something else. Each device fills in this blank differently.
+
+
+----------------------------------------------------------------
+  FILE 2: EcoDevice.java  — The Contract
+----------------------------------------------------------------
+  Think of this like a certification standard.
+  Any device that wants to be called "eco-friendly" must
+  sign this contract and promise to have these features:
+
+    enablePowerSaving()   →  reduce power when city is quiet
+    disablePowerSaving()  →  restore full power when needed
+    emergencyOverride()   →  force full power in an emergency
+
+  The first two are MANDATORY — no body provided.
+  Each device writes its own version.
+
+  emergencyOverride() is a DEFAULT method — it has a body
+  that works for any device out of the box. A device can
+  override it to add extra steps (SmartStreetGrid does this).
+
+  The key benefit of an interface:
+    You can say "this variable must be an EcoDevice"
+    and be sure it will always have these three features,
+    no matter which brand or type of device it actually is.
+
+
+----------------------------------------------------------------
+  FILE 3: SmartStreetGrid.java  — The Device
+----------------------------------------------------------------
+  This is the REAL class — it does actual work.
+  It extends UrbanUtility (is a type of city device)
+  and implements EcoDevice (is eco-certified).
+
+  FIELDS (data it stores):
+    gridZone         →  which part of the city ("North", "East")
+    totalNodes       →  how many streetlight poles in this grid
+    lightIntensity   →  current brightness 0–100 %
+    isPowerSavingMode →  is eco mode currently on?
+
+  --- Constructor Chaining ---
+  There are 3 ways to create a SmartStreetGrid:
+
+    new SmartStreetGrid("North")
+      → Only zone given. Fills in 50 nodes and calculates power.
+        Calls → SmartStreetGrid("North", 50)
+
+    new SmartStreetGrid("East", 80)
+      → Zone and node count given. Auto-generates serial number.
+        Calls → SmartStreetGrid("SSG-EAST-080", "East", 80, 12.0)
+
+    new SmartStreetGrid("SSG-WEST-100", "West", 100, 15.0)
+      → Everything provided explicitly.
+        Calls → super("SSG-WEST-100", 15.0) in UrbanUtility
+
+  Each constructor calls the next using this(...)
+  so the full setup logic only lives in ONE place.
+
+  --- performCoreAction() ---
+  This fills in the blank from UrbanUtility.
+  For a street grid, the core action is:
+    Print the current lighting status across all nodes.
+
+  --- enablePowerSaving() ---
+  Dims lights to 40 % and cuts power draw to 40 %.
+  Sets status to "ECO".
+
+  --- disablePowerSaving() ---
+  Restores lights to 100 % and full power draw.
+  Sets status back to "ONLINE".
+
+  --- emergencyOverride(reason) ---
+  First calls EcoDevice.super.emergencyOverride() to print
+  the universal warning messages (from the interface default).
+  Then does grid-specific steps: forces all nodes to full
+  power and sets status to "EMERGENCY".
+
+  --- scalePower(factor) ---
+  Lets you set any brightness level between 10 % and 100 %.
+  Example: scalePower(0.75) → 75 % brightness, 75 % power draw.
+  This simulates a city dimming lights at 2 AM to save energy.
+
+
+----------------------------------------------------------------
+  FILE 4: EcoGridApp.java  — The Launcher
+----------------------------------------------------------------
+  This contains main() — the entry point Java always looks for.
+  It creates SmartStreetGrid objects and calls their methods
+  to demonstrate every OOP concept one section at a time.
+
+  Section 1 — Constructor Chaining
+    Creates 3 grids using the 3 different constructors.
+    Shows how serial numbers are auto-generated.
+
+  Section 2 — Abstraction
+    Calls displayInfo() on eastGrid.
+    UrbanUtility prints the base fields (serial, status, power).
+    SmartStreetGrid then adds zone, nodes, intensity on top.
+
+  Section 3 — Abstract Method
+    Calls performCoreAction() — the blank that SmartStreetGrid filled in.
+
+  Section 4 — Interface Contract
+    Turns eco mode on, checks the grid output, turns it off, checks again.
+
+  Section 5 — Dynamic Power Scaling
+    Scales the grid down to 75%, 50%, 25%, then back to 100%.
+
+  Section 6 — Emergency Override
+    First puts the grid into eco mode (40%).
+    Then triggers emergency — the interface default runs,
+    followed by the grid snapping back to full power.
+
+  Section 7 — Polymorphism
+    Creates 3 grids stored in an UrbanUtility[] array.
+    Even though the variable type is UrbanUtility,
+    Java calls the SmartStreetGrid version of performCoreAction()
+    for each one. This is runtime polymorphism.
+
+
+================================================================
+  OOP CONCEPTS SUMMARY
+================================================================
+
+  Abstraction      →  UrbanUtility hides complexity behind a
+                      simple template. Child classes fill in blanks.
+
+  Abstract Method  →  performCoreAction() is declared but empty.
+                      Forces every device to define its own operation.
+
+  Interface        →  EcoDevice is a contract. Any class that
+                      implements it MUST have those methods.
+
+  Default Method   →  emergencyOverride() in EcoDevice works
+                      out-of-the-box for any device.
+
+  Constructor      →  SmartStreetGrid has 3 constructors.
+  Chaining            Each calls the next with this(...) until
+                      the final one calls super() to set base fields.
+
+  Inheritance      →  SmartStreetGrid gets serialNumber, powerRating,
+                      displayInfo() etc. for free from UrbanUtility.
+
+  Polymorphism     →  UrbanUtility reference holds a SmartStreetGrid
+                      object. Java picks the right method at runtime.
+
+================================================================
+
+Code in Simple Terms
+4 files, each with one job:
+
+File	Analogy	What it does
+UrbanUtility.java	Government form	Template every city device must follow. Stores serial + power. Has a blank (performCoreAction) every child must fill in
+EcoDevice.java	Eco-certification	A contract — any device that signs it must have power-saving and emergency features
+SmartStreetGrid.java	Actual device	A real streetlight grid. Uses all 3 constructors (1-arg → 2-arg → 4-arg), manages brightness, handles eco mode and emergencies
+EcoGridApp.java	Remote control	Runs everything — creates grids, flips modes, triggers emergencies, demos polymorphism
+Constructor chaining in plain English:
+
+
+new SmartStreetGrid("North")          ← you give just the zone
+    calls → SmartStreetGrid("North", 50)     ← adds default 50 nodes
+        calls → SmartStreetGrid("SSG-NORTH-050", "North", 50, 7.5)  ← builds serial + power
+            calls → super(...)               ← sets base fields in UrbanUtility
+One entry point, all setup logic in one place.
